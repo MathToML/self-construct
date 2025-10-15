@@ -1,9 +1,9 @@
 ---
 id: RECEIPT-001
-version: 0.0.1
-status: draft
+version: 0.1.0
+status: completed
 created: 2025-10-14
-updated: 2025-10-14
+updated: 2025-10-15
 author: @edward
 priority: high
 category: feature
@@ -26,6 +26,17 @@ scope:
 # @SPEC:RECEIPT-001: Receipt Upload & Basic Flow - Employee Web App MVP
 
 ## HISTORY
+
+### v0.1.0 (2025-10-15)
+- **COMPLETED**: TDD 구현 완료 (RED-GREEN-REFACTOR 사이클)
+- **ADDED**: Flutter/Firebase 기반 영수증 업로드/조회 기능 구현
+- **ADDED**: FlutterFlow Record/Snapshot 패턴 적용
+- **ADDED**: Firestore/Storage 보안 규칙 구현
+- **TEST**: 6개 테스트 파일 생성 (models, services, pages)
+- **CODE**: 6개 구현 파일 생성 (models, services, pages)
+- **SECURITY**: Firebase 보안 규칙 2개 파일 작성 (firestore.rules, storage.rules)
+- **AUTHOR**: @edward
+- **TAG CHAIN**: @SPEC:RECEIPT-001 → @TEST:RECEIPT-001 (6개) → @CODE:RECEIPT-001 (8개)
 
 ### v0.0.1 (2025-10-14)
 - **INITIAL**: Receipt Upload & Basic Flow MVP 명세 최초 작성
