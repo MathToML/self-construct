@@ -1,7 +1,7 @@
 ---
 id: RECEIPT-002
-version: 0.0.1
-status: draft
+version: 0.1.0
+status: completed
 created: 2025-10-15
 updated: 2025-10-15
 author: @edward
@@ -27,6 +27,22 @@ scope:
 # @SPEC:RECEIPT-002: 영수증 실시간 목록 조회 및 상세 업로드 기능
 
 ## HISTORY
+
+### v0.1.0 (2025-10-15)
+- **COMPLETED**: TDD 구현 완료 (RED-GREEN-REFACTOR-STYLE 사이클)
+- **CHANGED**: UI 프레임워크 전환 (Material Design → shadcn_ui)
+- **ADDED**: ReceiptCard - shadcn_ui ShadCard 기반 영수증 카드 위젯
+- **ADDED**: ReceiptListPage - StreamBuilder + ShadButton 실시간 목록 조회
+- **ADDED**: ReceiptUploadPage - ShadInput + ShadSelect + FilePicker 업로드
+- **TEST**: 3개 테스트 파일 생성 (23개 위젯 테스트)
+- **CODE**: 3개 구현 파일 생성 (pages, widgets)
+- **AUTHOR**: @edward
+- **REASON**: SPEC-RECEIPT-002 TDD 구현 완료, shadcn_ui 마이그레이션
+- **RELATED**:
+  - 🔴 RED: ac7b6f5
+  - 🟢 GREEN: 125c809
+  - ♻️ REFACTOR: 57470c2
+  - 🎨 STYLE: 92bad25
 
 ### v0.0.1 (2025-10-15)
 - **INITIAL**: 영수증 실시간 목록 조회 및 상세 업로드 기능 SPEC 작성
