@@ -1,0 +1,17 @@
+// @CODE:RECEIPT-001 | SPEC: .moai/specs/SPEC-RECEIPT-001/spec.md
+// Firebase Storage Security Rules for Receipt Flow MVP
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // receipts 디렉토리 규칙
+    match /receipts/{userId}/{allPaths=**} {
+      // 읽기: 본인 폴더만 조회 가능
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // 쓰기 (업로드): 본인 폴더에만 업로드 가능
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
