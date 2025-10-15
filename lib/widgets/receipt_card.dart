@@ -6,7 +6,15 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/receipt_record.dart';
 
 /// 영수증 카드 위젯
+///
 /// FlutterFlow 스타일: 간단하고 직관적인 카드 UI
+///
+/// SPEC 요구사항:
+/// - businessPurpose 20자 초과 시 "..." 생략
+/// - amount 통화 형식 (₩12,346)
+/// - date yyyy-MM-dd 형식
+/// - 이미지 썸네일 80x80 (CachedNetworkImage)
+/// - 카테고리 Chip 표시
 class ReceiptCard extends StatelessWidget {
   final ReceiptRecord receipt;
 

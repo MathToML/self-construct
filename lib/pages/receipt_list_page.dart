@@ -9,7 +9,15 @@ import '../models/receipt_record.dart';
 import '../widgets/receipt_card.dart';
 
 /// 영수증 목록 페이지
+///
 /// FlutterFlow 스타일: StreamBuilder 기반 실시간 목록 조회
+///
+/// SPEC 요구사항:
+/// - StreamBuilder로 Firestore 실시간 조회
+/// - userId 필터링, date 내림차순 정렬
+/// - 로딩/에러/빈 목록 상태 처리
+/// - ReceiptCard로 목록 표시
+/// - FloatingActionButton으로 업로드 화면 이동
 class ReceiptListPage extends StatelessWidget {
   const ReceiptListPage({super.key});
 

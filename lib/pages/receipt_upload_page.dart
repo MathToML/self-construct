@@ -12,7 +12,17 @@ import '../services/auth_service.dart';
 import '../models/receipt_record.dart';
 
 /// 영수증 업로드 페이지
+///
 /// FlutterFlow 스타일: FilePicker + Firebase Storage 업로드
+///
+/// SPEC 요구사항:
+/// - FilePicker로 이미지 선택 (JPG, PNG, 5MB 이하)
+/// - 필수 필드: amount, category
+/// - 선택 필드: businessPurpose
+/// - DatePicker로 날짜 선택
+/// - Firebase Storage 이미지 업로드
+/// - Firestore receipts 컬렉션에 저장
+/// - 업로드 중 버튼 비활성화 + 진행률 표시
 class ReceiptUploadPage extends StatefulWidget {
   const ReceiptUploadPage({super.key});
 
@@ -39,6 +49,10 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     super.dispose();
   }
 
+  /// 이미지 선택
+  ///
+  /// FilePicker로 JPG/PNG 이미지 선택
+  /// 5MB 초과 시 에러 메시지 표시
   Future<void> _pickImage() async {
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -79,6 +93,9 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     }
   }
 
+  /// 날짜 선택
+  ///
+  /// DatePicker로 영수증 날짜 선택 (과거 날짜만 가능)
   Future<void> _selectDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
@@ -94,6 +111,9 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     }
   }
 
+  /// Firebase Storage에 이미지 업로드
+  ///
+  /// Returns: 업로드된 이미지 다운로드 URL
   Future<String> _uploadImageToStorage(File file, String userId) async {
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
     final ref = FirebaseStorage.instance
@@ -106,6 +126,12 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     return await ref.getDownloadURL();
   }
 
+  /// 영수증 업로드
+  ///
+  /// 1. 폼 검증 (필수 필드)
+  /// 2. 이미지 Firebase Storage 업로드
+  /// 3. Firestore receipts 컬렉션에 저장
+  /// 4. 성공 시 목록 화면 복귀
   Future<void> _uploadReceipt() async {
     // 폼 검증
     if (!_formKey.currentState!.validate()) {

@@ -2,9 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:self_construct/models/receipt_record.dart';
 import 'package:self_construct/pages/receipt_list_page.dart';
-import 'package:self_construct/widgets/receipt_card.dart';
 
 void main() {
   group('ReceiptListPage Tests', () {
