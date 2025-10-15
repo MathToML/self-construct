@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import '../services/auth_service.dart';
 import '../models/receipt_record.dart';
 import '../widgets/receipt_card.dart';
 
 /// 영수증 목록 페이지
 ///
-/// FlutterFlow 스타일: StreamBuilder 기반 실시간 목록 조회
+/// shadcn_ui 스타일: StreamBuilder 기반 실시간 목록 조회
 ///
 /// SPEC 요구사항:
 /// - StreamBuilder로 Firestore 실시간 조회
@@ -23,6 +24,7 @@ class ReceiptListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
     final authService = AuthService(auth: FirebaseAuth.instance);
     final userId = authService.getCurrentUser();
 
@@ -38,17 +40,19 @@ class ReceiptListPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('영수증 목록'),
+        title: Text(
+          '영수증 목록',
+          style: theme.textTheme.h4,
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
+          ShadButton.ghost(
             onPressed: () async {
               await authService.signOut();
               if (context.mounted) {
                 context.go('/login');
               }
             },
-            tooltip: '로그아웃',
+            child: const Icon(Icons.logout, size: 20),
           ),
         ],
       ),
@@ -70,11 +74,18 @@ class ReceiptListPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error, size: 48, color: Colors.red),
+                  Icon(
+                    Icons.error,
+                    size: 48,
+                    color: theme.colorScheme.destructive,
+                  ),
                   const SizedBox(height: 16),
-                  Text('에러: ${snapshot.error}'),
+                  Text(
+                    '에러: ${snapshot.error}',
+                    style: theme.textTheme.muted,
+                  ),
                   const SizedBox(height: 16),
-                  ElevatedButton(
+                  ShadButton(
                     onPressed: () {
                       // 새로고침
                     },
@@ -87,20 +98,24 @@ class ReceiptListPage extends StatelessWidget {
 
           // 빈 목록
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.receipt_long, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
+                  Icon(
+                    Icons.receipt_long,
+                    size: 64,
+                    color: theme.colorScheme.mutedForeground,
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     '등록된 영수증이 없습니다',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                    style: theme.textTheme.large,
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     '아래 + 버튼을 눌러 영수증을 추가하세요',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                    style: theme.textTheme.muted,
                   ),
                 ],
               ),
@@ -113,9 +128,13 @@ class ReceiptListPage extends StatelessWidget {
               .toList();
 
           return ListView.builder(
+            padding: const EdgeInsets.all(8),
             itemCount: receipts.length,
             itemBuilder: (context, index) {
-              return ReceiptCard(receipt: receipts[index]);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ReceiptCard(receipt: receipts[index]),
+              );
             },
           );
         },

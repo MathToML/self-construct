@@ -7,13 +7,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import '../services/auth_service.dart';
 import '../models/receipt_record.dart';
 
 /// 영수증 업로드 페이지
 ///
-/// FlutterFlow 스타일: FilePicker + Firebase Storage 업로드
+/// shadcn_ui 스타일: FilePicker + Firebase Storage 업로드
 ///
 /// SPEC 요구사항:
 /// - FilePicker로 이미지 선택 (JPG, PNG, 5MB 이하)
@@ -67,10 +67,9 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
         // 5MB 체크 (5 * 1024 * 1024 = 5242880 bytes)
         if (size > 5 * 1024 * 1024) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('파일 크기는 5MB를 초과할 수 없습니다'),
-                backgroundColor: Colors.red,
+            ShadToaster.of(context).show(
+              const ShadToast.destructive(
+                description: Text('파일 크기는 5MB를 초과할 수 없습니다'),
               ),
             );
           }
@@ -83,10 +82,9 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('이미지 선택 실패: $e'),
-            backgroundColor: Colors.red,
+        ShadToaster.of(context).show(
+          ShadToast.destructive(
+            description: Text('이미지 선택 실패: $e'),
           ),
         );
       }
@@ -140,10 +138,9 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
 
     // 이미지 필수 체크
     if (_imageFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('이미지를 선택해주세요'),
-          backgroundColor: Colors.red,
+      ShadToaster.of(context).show(
+        const ShadToast.destructive(
+          description: Text('이미지를 선택해주세요'),
         ),
       );
       return;
@@ -151,10 +148,9 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
 
     // 카테고리 필수 체크
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('카테고리를 선택해주세요'),
-          backgroundColor: Colors.red,
+      ShadToaster.of(context).show(
+        const ShadToast.destructive(
+          description: Text('카테고리를 선택해주세요'),
         ),
       );
       return;
@@ -195,10 +191,9 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
           .add(receipt.toMap());
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('영수증이 성공적으로 업로드되었습니다'),
-            backgroundColor: Colors.green,
+        ShadToaster.of(context).show(
+          const ShadToast(
+            description: Text('영수증이 성공적으로 업로드되었습니다'),
           ),
         );
 
@@ -207,10 +202,9 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('업로드 실패: $e'),
-            backgroundColor: Colors.red,
+        ShadToaster.of(context).show(
+          ShadToast.destructive(
+            description: Text('업로드 실패: $e'),
           ),
         );
       }
@@ -225,11 +219,15 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
     final dateFormat = DateFormat('yyyy-MM-dd');
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('영수증 업로드'),
+        title: Text(
+          '영수증 업로드',
+          style: theme.textTheme.h4,
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -239,61 +237,73 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
             // 이미지 선택 버튼 및 미리보기
             GestureDetector(
               onTap: _isUploading ? null : _pickImage,
-              child: Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: _imageFile != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          _imageFile!,
-                          fit: BoxFit.cover,
+              child: ShadCard(
+                padding: EdgeInsets.zero,
+                child: Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.muted,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: _imageFile != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            _imageFile!,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.image,
+                              size: 64,
+                              color: theme.colorScheme.mutedForeground,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '이미지를 선택해주세요',
+                              style: theme.textTheme.muted,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '(JPG, PNG, 5MB 이하)',
+                              style: theme.textTheme.small.copyWith(
+                                color: theme.colorScheme.mutedForeground,
+                              ),
+                            ),
+                          ],
                         ),
-                      )
-                    : const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.image, size: 64, color: Colors.grey),
-                          SizedBox(height: 8),
-                          Text(
-                            '이미지를 선택해주세요',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                          Text(
-                            '(JPG, PNG, 5MB 이하)',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                        ],
-                      ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
 
             // 이미지 선택 버튼
-            ElevatedButton.icon(
+            ShadButton(
               onPressed: _isUploading ? null : _pickImage,
-              icon: const Icon(Icons.upload_file),
-              label: const Text('이미지 선택'),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.upload_file, size: 20),
+                  SizedBox(width: 8),
+                  Text('이미지 선택'),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
 
             // 금액 입력 (필수)
-            TextFormField(
+            ShadInputFormField(
               key: const Key('amount_field'),
               controller: _amountController,
-              decoration: const InputDecoration(
-                labelText: '금액*',
-                border: OutlineInputBorder(),
-                hintText: '10000',
-              ),
+              label: const Text('금액*'),
+              placeholder: const Text('10000'),
               keyboardType: TextInputType.number,
               enabled: !_isUploading,
               validator: (value) {
-                if (value == null || value.trim().isEmpty) {
+                if (value.trim().isEmpty) {
                   return '금액을 입력해주세요';
                 }
                 if (double.tryParse(value) == null) {
@@ -305,76 +315,86 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
             const SizedBox(height: 16),
 
             // 카테고리 선택 (필수)
-            DropdownButtonFormField<String>(
+            Column(
               key: const Key('category_field'),
-              value: _selectedCategory,
-              decoration: const InputDecoration(
-                labelText: '카테고리*',
-                border: OutlineInputBorder(),
-              ),
-              items: _categories
-                  .map((category) => DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      ))
-                  .toList(),
-              onChanged: _isUploading
-                  ? null
-                  : (value) {
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    },
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('카테고리*', style: theme.textTheme.small),
+                const SizedBox(height: 8),
+                ShadSelect<String>(
+                  placeholder: const Text('카테고리 선택'),
+                  options: _categories
+                      .map((category) => ShadOption(
+                            value: category,
+                            child: Text(category),
+                          ))
+                      .toList(),
+                  selectedOptionBuilder: (context, value) => Text(value),
+                  onChanged: _isUploading
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _selectedCategory = value;
+                          });
+                        },
+                ),
+              ],
             ),
             const SizedBox(height: 16),
 
             // 날짜 선택
-            InkWell(
+            Column(
               key: const Key('date_field'),
-              onTap: _isUploading ? null : () => _selectDate(context),
-              child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: '날짜',
-                  border: OutlineInputBorder(),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('날짜', style: theme.textTheme.small),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: _isUploading ? null : () => _selectDate(context),
+                  child: ShadCard(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          dateFormat.format(_selectedDate),
+                          style: theme.textTheme.p,
+                        ),
+                        Icon(
+                          Icons.calendar_today,
+                          size: 20,
+                          color: theme.colorScheme.mutedForeground,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(dateFormat.format(_selectedDate)),
-                    const Icon(Icons.calendar_today),
-                  ],
-                ),
-              ),
+              ],
             ),
             const SizedBox(height: 16),
 
             // 업무 목적 입력 (선택)
-            TextFormField(
+            ShadInputFormField(
               key: const Key('business_purpose_field'),
               controller: _businessPurposeController,
-              decoration: const InputDecoration(
-                labelText: '업무 목적',
-                border: OutlineInputBorder(),
-                hintText: '팀 회식',
-              ),
+              label: const Text('업무 목적'),
+              placeholder: const Text('팀 회식'),
               maxLines: 3,
               enabled: !_isUploading,
             ),
             const SizedBox(height: 24),
 
             // 업로드 버튼
-            ElevatedButton(
+            ShadButton(
               onPressed: _isUploading ? null : _uploadReceipt,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
+              size: ShadButtonSize.lg,
               child: _isUploading
                   ? const SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('업로드', style: TextStyle(fontSize: 16)),
+                  : const Text('업로드'),
             ),
           ],
         ),
