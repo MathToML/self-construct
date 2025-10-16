@@ -34,3 +34,9 @@ yarn-error.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Flutter and Chrome temporary files
+.dart_tool/chrome-device/
+build/flutter_assets/packages/
+build/unit_test_assets/packages/
+shadcn_playground/build/
