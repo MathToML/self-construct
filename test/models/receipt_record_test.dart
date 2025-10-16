@@ -53,6 +53,57 @@ void main() {
       expect(map['amount'], 100.50);
       expect(map['isSubmitted'], true);
     });
+
+    // @TEST:RECEIPT-003 - copyWith 메서드 테스트
+    test('copyWith should create a new instance with updated fields', () {
+      // Arrange
+      final original = ReceiptRecord(
+        id: 'receipt123',
+        userId: 'user123',
+        imageUrl: 'https://example.com/image.jpg',
+        amount: 100.50,
+        date: DateTime(2025, 10, 14),
+        category: 'Food',
+        businessPurpose: 'Client meeting',
+        createdAt: DateTime(2025, 10, 14),
+        isSubmitted: false,
+      );
+
+      // Act
+      final updated = original.copyWith(isSubmitted: true);
+
+      // Assert
+      expect(updated.id, original.id);
+      expect(updated.userId, original.userId);
+      expect(updated.isSubmitted, true); // 변경된 필드
+      expect(original.isSubmitted, false); // 원본은 불변
+    });
+
+    test('copyWith should update multiple fields', () {
+      // Arrange
+      final original = ReceiptRecord(
+        id: 'receipt123',
+        userId: 'user123',
+        imageUrl: 'https://example.com/image.jpg',
+        amount: 100.50,
+        date: DateTime(2025, 10, 14),
+        category: 'Food',
+        businessPurpose: 'Client meeting',
+        createdAt: DateTime(2025, 10, 14),
+        isSubmitted: false,
+      );
+
+      // Act
+      final updated = original.copyWith(
+        amount: 200.0,
+        category: 'Transport',
+      );
+
+      // Assert
+      expect(updated.amount, 200.0);
+      expect(updated.category, 'Transport');
+      expect(updated.id, original.id); // 변경되지 않은 필드
+    });
   });
 }
 
