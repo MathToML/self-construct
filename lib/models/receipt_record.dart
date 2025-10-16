@@ -56,4 +56,29 @@ class ReceiptRecord {
       'isSubmitted': isSubmitted,
     };
   }
+
+  /// @CODE:RECEIPT-003 - copyWith 메서드 (불변 객체 업데이트)
+  ReceiptRecord copyWith({
+    String? id,
+    String? userId,
+    String? imageUrl,
+    double? amount,
+    DateTime? date,
+    String? category,
+    String? businessPurpose,
+    DateTime? createdAt,
+    bool? isSubmitted,
+  }) {
+    return ReceiptRecord(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      imageUrl: imageUrl ?? this.imageUrl,
+      amount: amount ?? this.amount,
+      date: date ?? this.date,
+      category: category ?? this.category,
+      businessPurpose: businessPurpose ?? this.businessPurpose,
+      createdAt: createdAt ?? this.createdAt,
+      isSubmitted: isSubmitted ?? this.isSubmitted,
+    );
+  }
 }

@@ -1,7 +1,8 @@
 // @CODE:RECEIPT-002:UI | SPEC: .moai/specs/SPEC-RECEIPT-002/spec.md | TEST: test/pages/receipt_upload_page_test.dart
 
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -23,8 +24,17 @@ import '../models/receipt_record.dart';
 /// - Firebase Storage 이미지 업로드
 /// - Firestore receipts 컬렉션에 저장
 /// - 업로드 중 버튼 비활성화 + 진행률 표시
+///
+/// @CODE:RECEIPT-003 - 수정 모드 추가
+/// - receiptId가 있으면 수정 모드, 없으면 생성 모드
+/// - 수정 모드: Firestore에서 기존 데이터 로드 후 컨트롤러에 설정
 class ReceiptUploadPage extends StatefulWidget {
-  const ReceiptUploadPage({super.key});
+  final String? receiptId; // 수정 모드일 때만 값이 있음
+
+  const ReceiptUploadPage({
+    super.key,
+    this.receiptId,
+  });
 
   @override
   State<ReceiptUploadPage> createState() => _ReceiptUploadPageState();
@@ -37,10 +47,52 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
 
   String? _selectedCategory;
   DateTime _selectedDate = DateTime.now();
-  File? _imageFile;
+  Uint8List? _imageBytes;
   bool _isUploading = false;
+  String? _existingImageUrl; // 수정 모드: 기존 이미지 URL
 
   final List<String> _categories = ['식비', '교통', '숙박', '기타'];
+
+  @override
+  void initState() {
+    super.initState();
+    // 수정 모드: 기존 데이터 로드
+    if (widget.receiptId != null) {
+      _loadExistingReceipt();
+    }
+  }
+
+  /// @CODE:RECEIPT-003 - 수정 모드: 기존 데이터 로드
+  Future<void> _loadExistingReceipt() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('receipts')
+          .doc(widget.receiptId)
+          .get();
+
+      if (!doc.exists) {
+        throw Exception('영수증을 찾을 수 없습니다');
+      }
+
+      final receipt = ReceiptRecord.fromSnapshot(doc);
+
+      setState(() {
+        _amountController.text = receipt.amount.toString();
+        _selectedCategory = receipt.category;
+        _selectedDate = receipt.date;
+        _businessPurposeController.text = receipt.businessPurpose ?? '';
+        _existingImageUrl = receipt.imageUrl;
+      });
+    } catch (e) {
+      if (mounted) {
+        ShadToaster.of(context).show(
+          ShadToast.destructive(
+            description: Text('데이터 로드 실패: $e'),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -58,14 +110,14 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png'],
+        withData: true, // Web에서 bytes를 가져오기 위해 필요
       );
 
-      if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
-        final size = await file.length();
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
 
         // 5MB 체크 (5 * 1024 * 1024 = 5242880 bytes)
-        if (size > 5 * 1024 * 1024) {
+        if (file.size > 5 * 1024 * 1024) {
           if (mounted) {
             ShadToaster.of(context).show(
               const ShadToast.destructive(
@@ -77,7 +129,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
         }
 
         setState(() {
-          _imageFile = file;
+          _imageBytes = file.bytes;
         });
       }
     } catch (e) {
@@ -112,7 +164,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
   /// Firebase Storage에 이미지 업로드
   ///
   /// Returns: 업로드된 이미지 다운로드 URL
-  Future<String> _uploadImageToStorage(File file, String userId) async {
+  Future<String> _uploadImageToStorage(Uint8List imageData, String userId) async {
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
     final ref = FirebaseStorage.instance
         .ref()
@@ -120,24 +172,28 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
         .child(userId)
         .child(fileName);
 
-    await ref.putFile(file);
+    await ref.putData(imageData);
     return await ref.getDownloadURL();
   }
 
-  /// 영수증 업로드
+  /// 영수증 업로드/수정
   ///
   /// 1. 폼 검증 (필수 필드)
   /// 2. 이미지 Firebase Storage 업로드
-  /// 3. Firestore receipts 컬렉션에 저장
-  /// 4. 성공 시 목록 화면 복귀
+  /// 3. Firestore receipts 컬렉션에 저장/업데이트
+  /// 4. 성공 시 목록 화면 또는 상세 화면으로 복귀
+  ///
+  /// @CODE:RECEIPT-003 - 수정 모드 추가
+  /// - widget.receiptId != null이면 .update() 사용
+  /// - widget.receiptId == null이면 .add() 사용
   Future<void> _uploadReceipt() async {
     // 폼 검증
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // 이미지 필수 체크
-    if (_imageFile == null) {
+    // 이미지 필수 체크 (생성 모드만)
+    if (_imageBytes == null && _existingImageUrl == null) {
       ShadToaster.of(context).show(
         const ShadToast.destructive(
           description: Text('이미지를 선택해주세요'),
@@ -168,37 +224,63 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
         throw Exception('로그인이 필요합니다');
       }
 
-      // 이미지 업로드
-      final imageUrl = await _uploadImageToStorage(_imageFile!, userId);
+      // 이미지 업로드 (새 이미지가 선택된 경우만)
+      String imageUrl = _existingImageUrl ?? '';
+      if (_imageBytes != null) {
+        imageUrl = await _uploadImageToStorage(_imageBytes!, userId);
+      }
 
-      // Firestore에 영수증 저장
-      final receipt = ReceiptRecord(
-        id: '', // Firestore가 자동 생성
-        userId: userId,
-        imageUrl: imageUrl,
-        amount: double.parse(_amountController.text),
-        date: _selectedDate,
-        category: _selectedCategory,
-        businessPurpose: _businessPurposeController.text.trim().isEmpty
-            ? null
-            : _businessPurposeController.text.trim(),
-        createdAt: DateTime.now(),
-        isSubmitted: false,
-      );
+      if (widget.receiptId != null) {
+        // 수정 모드: Firestore 업데이트
+        await FirebaseFirestore.instance
+            .collection('receipts')
+            .doc(widget.receiptId)
+            .update({
+          'amount': double.parse(_amountController.text),
+          'category': _selectedCategory,
+          'date': Timestamp.fromDate(_selectedDate),
+          'businessPurpose': _businessPurposeController.text.trim().isEmpty
+              ? null
+              : _businessPurposeController.text.trim(),
+          if (_imageBytes != null) 'imageUrl': imageUrl, // 이미지 변경 시만
+        });
 
-      await FirebaseFirestore.instance
-          .collection('receipts')
-          .add(receipt.toMap());
-
-      if (mounted) {
-        ShadToaster.of(context).show(
-          const ShadToast(
-            description: Text('영수증이 성공적으로 업로드되었습니다'),
-          ),
+        if (mounted) {
+          ShadToaster.of(context).show(
+            const ShadToast(
+              description: Text('영수증이 수정되었습니다'),
+            ),
+          );
+          context.pop(); // 상세 화면으로 복귀
+        }
+      } else {
+        // 생성 모드: Firestore에 새 문서 추가
+        final receipt = ReceiptRecord(
+          id: '', // Firestore가 자동 생성
+          userId: userId,
+          imageUrl: imageUrl,
+          amount: double.parse(_amountController.text),
+          date: _selectedDate,
+          category: _selectedCategory,
+          businessPurpose: _businessPurposeController.text.trim().isEmpty
+              ? null
+              : _businessPurposeController.text.trim(),
+          createdAt: DateTime.now(),
+          isSubmitted: false,
         );
 
-        // 목록 화면으로 복귀
-        context.go('/');
+        await FirebaseFirestore.instance
+            .collection('receipts')
+            .add(receipt.toMap());
+
+        if (mounted) {
+          ShadToaster.of(context).show(
+            const ShadToast(
+              description: Text('영수증이 성공적으로 업로드되었습니다'),
+            ),
+          );
+          context.go('/'); // 목록 화면으로 복귀
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -219,14 +301,14 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
     final dateFormat = DateFormat('yyyy-MM-dd');
+    final isEditMode = widget.receiptId != null;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '영수증 업로드',
-          style: theme.textTheme.h4,
+          isEditMode ? '영수증 수정' : '영수증 업로드',
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
       ),
       body: Form(
@@ -242,39 +324,53 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                 child: Container(
                   height: 200,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.muted,
+                    color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: _imageFile != null
+                  child: _imageBytes != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.file(
-                            _imageFile!,
+                          child: Image.memory(
+                            _imageBytes!,
                             fit: BoxFit.cover,
                           ),
                         )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.image,
-                              size: 64,
-                              color: theme.colorScheme.mutedForeground,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '이미지를 선택해주세요',
-                              style: theme.textTheme.muted,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '(JPG, PNG, 5MB 이하)',
-                              style: theme.textTheme.small.copyWith(
-                                color: theme.colorScheme.mutedForeground,
+                      : _existingImageUrl != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: CachedNetworkImage(
+                                imageUrl: _existingImageUrl!,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.error),
                               ),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.image,
+                                  size: 64,
+                                  color: Colors.grey[600],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '이미지를 선택해주세요',
+                                  style: TextStyle(color: Colors.grey[700]),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '(JPG, PNG, 5MB 이하)',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
                 ),
               ),
             ),
@@ -319,7 +415,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
               key: const Key('category_field'),
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('카테고리*', style: theme.textTheme.small),
+                const Text('카테고리*', style: TextStyle(fontSize: 14)),
                 const SizedBox(height: 8),
                 ShadSelect<String>(
                   placeholder: const Text('카테고리 선택'),
@@ -347,7 +443,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
               key: const Key('date_field'),
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('날짜', style: theme.textTheme.small),
+                const Text('날짜', style: TextStyle(fontSize: 14)),
                 const SizedBox(height: 8),
                 InkWell(
                   onTap: _isUploading ? null : () => _selectDate(context),
@@ -358,12 +454,11 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                       children: [
                         Text(
                           dateFormat.format(_selectedDate),
-                          style: theme.textTheme.p,
                         ),
                         Icon(
                           Icons.calendar_today,
                           size: 20,
-                          color: theme.colorScheme.mutedForeground,
+                          color: Colors.grey[600],
                         ),
                       ],
                     ),
@@ -384,7 +479,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
             ),
             const SizedBox(height: 24),
 
-            // 업로드 버튼
+            // 업로드/수정 버튼
             ShadButton(
               onPressed: _isUploading ? null : _uploadReceipt,
               size: ShadButtonSize.lg,
@@ -394,7 +489,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('업로드'),
+                  : Text(isEditMode ? '수정' : '업로드'),
             ),
           ],
         ),

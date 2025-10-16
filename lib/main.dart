@@ -1,4 +1,5 @@
 // @CODE:RECEIPT-001 | SPEC: .moai/specs/SPEC-RECEIPT-001/spec.md
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,6 +9,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'firebase_options.dart';
 import 'pages/receipt_list_page.dart';
 import 'pages/receipt_upload_page.dart';
+import 'pages/receipt_detail_page.dart'; // @CODE:RECEIPT-003
 import 'services/auth_service.dart';
 
 void main() async {
@@ -26,15 +28,9 @@ class ReceiptFlowApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShadApp(
-      home: MaterialApp.router(
-        title: 'Receipt Flow',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
-        ),
-        routerConfig: _router,
-      ),
+    return ShadApp.router(
+      title: 'Receipt Flow',
+      routerConfig: _router,
     );
   }
 }
@@ -42,9 +38,9 @@ class ReceiptFlowApp extends StatelessWidget {
 // GoRouter 설정
 final _router = GoRouter(
   initialLocation: '/',
-  redirect: (context, state) async {
-    final authService = AuthService(auth: FirebaseAuth.instance);
-    final user = authService.getCurrentUser();
+  refreshListenable: GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges()),
+  redirect: (context, state) {
+    final user = FirebaseAuth.instance.currentUser;
     final isAuthPage = state.matchedLocation == '/login';
 
     // 로그인하지 않은 사용자는 로그인 페이지로
@@ -72,8 +68,42 @@ final _router = GoRouter(
       path: '/upload',
       builder: (context, state) => const ReceiptUploadPage(),
     ),
+    // @CODE:RECEIPT-003 - 영수증 상세 화면
+    GoRoute(
+      path: '/receipt/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return ReceiptDetailPage(receiptId: id);
+      },
+    ),
+    // @CODE:RECEIPT-003 - 영수증 수정 화면 (ReceiptUploadPage 재사용)
+    GoRoute(
+      path: '/receipt/:id/edit',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return ReceiptUploadPage(receiptId: id);
+      },
+    ),
   ],
 );
+
+// GoRouter refresh stream helper
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+          (dynamic _) => notifyListeners(),
+        );
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
 
 // 로그인 페이지
 class LoginPage extends StatefulWidget {
