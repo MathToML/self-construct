@@ -40,3 +40,14 @@ Thumbs.db
 build/flutter_assets/packages/
 build/unit_test_assets/packages/
 shadcn_playground/build/
+
+# Untracked configs and keys
+.firebaserc
+CODE_REVIEW_ISSUES.md
+FIREBASE_ANONYMOUS_AUTH_GUIDE.md
+FIREBASE_SETUP.md
+auth.json
+firestore.indexes.json
+scripts/
+shadcn_playground/.dart_tool/
+shadcn_playground/devtools_options.yaml
