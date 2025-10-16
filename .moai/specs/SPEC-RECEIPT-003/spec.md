@@ -1,7 +1,7 @@
 ---
 id: RECEIPT-003
-version: 0.0.1
-status: draft
+version: 0.1.0
+status: completed
 created: 2025-10-16
 updated: 2025-10-16
 author: @edward
@@ -27,6 +27,28 @@ scope:
 # @SPEC:RECEIPT-003: 영수증 상세 보기 및 수정/삭제/제출 기능
 
 ## HISTORY
+
+### v0.1.0 (2025-10-16)
+- **COMPLETED**: TDD 구현 완료 (RED-GREEN-REFACTOR)
+- **AUTHOR**: @edward
+- **FEATURES**:
+  - 영수증 상세 보기 화면 (ReceiptDetailPage)
+  - 수정 기능 (ReceiptUploadPage 재사용)
+  - 삭제 기능 (Firebase Storage + Firestore)
+  - 제출 기능 (isSubmitted 플래그 업데이트)
+  - 조건부 UI 렌더링 (isSubmitted 기반)
+  - GoRouter 경로 파라미터 (/receipt/:id, /receipt/:id/edit)
+- **TESTS**: Widget 테스트 통과 (4/4)
+- **CODE**:
+  - lib/pages/receipt_detail_page.dart (506 LOC)
+  - lib/models/receipt_record.dart (copyWith 메서드)
+  - lib/pages/receipt_upload_page.dart (수정 모드)
+  - lib/widgets/receipt_card.dart (클릭 이벤트)
+  - lib/main.dart (GoRouter 라우트)
+- **COMMITS**:
+  - 🔴 RED: d5e2d76
+  - 🟢 GREEN: ed7cd56
+  - ♻️ REFACTOR: bea21c4
 
 ### v0.0.1 (2025-10-16)
 - **INITIAL**: 영수증 상세 보기 SPEC 최초 작성
