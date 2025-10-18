@@ -1,7 +1,7 @@
 ---
 id: RECEIPT-004
-version: 0.0.1
-status: draft
+version: 0.1.0
+status: completed
 created: 2025-10-18
 updated: 2025-10-18
 author: @edward
@@ -30,6 +30,33 @@ scope:
 # @SPEC:RECEIPT-004: 영수증 검색 및 필터링
 
 ## HISTORY
+
+### v0.1.0 (2025-10-18)
+- **COMPLETED**: TDD 구현 완료 (RED-GREEN-REFACTOR)
+- **AUTHOR**: @edward
+- **FEATURES**:
+  - 키워드 검색 (300ms debounce, businessPurpose 필드)
+  - 카테고리 필터 (식비/교통/숙박/기타 단일 선택)
+  - 날짜 범위 필터 (DatePicker 기반)
+  - 금액 범위 필터 (최소~최대 입력)
+  - 제출 상태 필터 (제출됨/대기중 토글)
+  - 필터 초기화 버튼
+  - 활성 필터 배지 표시
+- **TESTS**: 20개 테스트 통과 (모두 pass)
+  - `test/utils/receipt_filter_test.dart` (16개)
+  - `test/utils/debounce_test.dart` (4개)
+- **CODE**: 7개 파일 생성/수정
+  - `lib/utils/debounce.dart` (25 LOC)
+  - `lib/utils/receipt_filter.dart` (95 LOC)
+  - `lib/pages/receipts/receipt_search_page.dart` (231 LOC)
+  - `lib/widgets/receipt_filter_widget.dart` (207 LOC)
+  - `lib/services/firestore_service.dart` (+25 LOC)
+  - `lib/main.dart` (+5 LOC)
+  - `pubspec.yaml` (intl: ^0.20.2 추가)
+- **COMMITS**:
+  - RED: 7ec867c - 테스트 케이스 작성 (20개)
+  - GREEN: fd65fbc - 구현 완료 (7개 파일)
+- **TECH STACK**: Flutter 3.24+, shadcn_flutter, Firestore, Dart Timer
 
 ### v0.0.1 (2025-10-18)
 - **INITIAL**: 영수증 검색 및 필터링 기능 SPEC 최초 작성
