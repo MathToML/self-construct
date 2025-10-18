@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'firebase_options.dart';
 import 'pages/receipt_list_page.dart';
 import 'pages/receipt_upload_page.dart';
+import 'pages/receipts/receipt_search_page.dart';
 import 'services/auth_service.dart';
 
 void main() async {
@@ -68,6 +69,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/upload',
       builder: (context, state) => const ReceiptUploadPage(),
+    ),
+    GoRoute(
+      path: '/search',
+      builder: (context, state) => const ReceiptSearchPage(),
     ),
   ],
 );

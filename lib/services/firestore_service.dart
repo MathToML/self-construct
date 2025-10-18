@@ -70,4 +70,29 @@ class FirestoreService {
       throw Exception('Failed to delete receipt: $e');
     }
   }
+
+  /// @CODE:RECEIPT-004 - 검색 및 필터링용 쿼리
+  /// TDD: GREEN - Firestore 쿼리 빌더 (제한적 필터 지원)
+  ///
+  /// [userId]: 사용자 ID (필수)
+  /// [limit]: 결과 제한 (기본값: 100)
+  ///
+  /// Note: Firestore 제약으로 인해 복잡한 필터는 클라이언트 사이드에서 처리
+  Stream<List<ReceiptRecord>> getReceiptsForSearch(
+    String userId, {
+    int limit = 100,
+  }) {
+    try {
+      return receiptsCollection
+          .where('userId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .snapshots()
+          .map((snapshot) => snapshot.docs
+              .map((doc) => ReceiptRecord.fromSnapshot(doc))
+              .toList());
+    } catch (e) {
+      throw Exception('Failed to get receipts for search: $e');
+    }
+  }
 }
