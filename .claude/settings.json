@@ -6,44 +6,6 @@
     "MOAI_PERFORMANCE_MONITORING": "true",
     "NODE_ENV": "team"
   },
-  "hooks": {
-    "PostToolUse": [],
-    "PreToolUse": [
-      {
-        "hooks": [
-          {
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/alfred/pre-write-guard.cjs",
-            "type": "command"
-          },
-          {
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/alfred/moai-enforcer.cjs",
-            "type": "command"
-          }
-        ],
-        "matcher": "Edit|Write|MultiEdit"
-      },
-      {
-        "hooks": [
-          {
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/alfred/policy-block.cjs",
-            "type": "command"
-          }
-        ],
-        "matcher": "Bash"
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/alfred/session-notice-lite.cjs",
-            "type": "command"
-          }
-        ],
-        "matcher": "*"
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Task",
@@ -92,14 +54,6 @@
       "Bash(sort:*)",
       "Bash(uniq:*)"
     ],
-    "ask": [
-      "Bash(git push:*)",
-      "Bash(git merge:*)",
-      "Bash(gh pr merge:*)",
-      "Bash(npm install:*)",
-      "Bash(rm:*)"
-    ],
-    "defaultMode": "default",
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
@@ -111,6 +65,63 @@
       "Bash(dd:*)",
       "Bash(mkfs:*)",
       "Bash(fdisk:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git merge:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(npm install:*)",
+      "Bash(rm:*)"
+    ],
+    "defaultMode": "default"
+  },
+  "hooks": {
+    "PostToolUse": [],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/alfred/pre-write-guard.cjs"
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/alfred/moai-enforcer.cjs"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/alfred/policy-block.cjs"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/alfred/session-notice-lite.cjs"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/edward/Projects/GitHub/self-construct/notify_coordinator.sh"
+          }
+        ]
+      }
     ]
   }
 }
