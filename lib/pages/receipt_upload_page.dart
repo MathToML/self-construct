@@ -29,6 +29,12 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('영수증 업로드'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
